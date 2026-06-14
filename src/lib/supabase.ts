@@ -15,6 +15,13 @@ export interface Profile {
   created_at: string
 }
 
+export interface SessionAnswer {
+  q: number
+  question: string
+  correct: boolean
+  latency_sec: number
+}
+
 export interface TherapySession {
   id: string
   patient_id: string
@@ -26,6 +33,7 @@ export interface TherapySession {
   hints_used: number
   exercises_count: number
   completed_at: string
+  answers?: SessionAnswer[]
 }
 
 export interface DoctorPatient {

@@ -7,7 +7,7 @@ import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar, CartesianGrid,
 } from 'recharts'
-import { supabase, type Profile, type TherapySession, type AphasiaType, type Level } from '@/lib/supabase'
+import { supabase, type Profile, type TherapySession, type AphasiaType, type Level, type SessionAnswer } from '@/lib/supabase'
 import { formatDate, formatDateTime } from '@/lib/tz'
 
 const APHASIA_COLORS: Record<AphasiaType, string> = {
@@ -100,7 +100,7 @@ function SessionModal({ session, onClose }: { session: TherapySession; onClose: 
         </div>
 
         {/* Result indicator */}
-        <div className="flex items-center gap-2 p-3 rounded-xl"
+        <div className="flex items-center gap-2 p-3 rounded-xl mb-4"
           style={{ background: acc >= 80 ? '#1F8A5B18' : acc >= 60 ? '#E5A84A18' : '#C53E3E18' }}>
           {acc >= 60
             ? <CheckCircle size={16} color={accColor} />
@@ -109,6 +109,30 @@ function SessionModal({ session, onClose }: { session: TherapySession; onClose: 
             {acc >= 80 ? 'Excellent performance' : acc >= 60 ? 'Good progress' : 'Needs more practice'}
           </p>
         </div>
+
+        {/* Per-question answers */}
+        {session.answers && session.answers.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text3)' }}>
+              Question Breakdown
+            </p>
+            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+              {session.answers.map((a: SessionAnswer) => (
+                <div key={a.q} className="flex items-start gap-3 px-3 py-2.5"
+                  style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg)' }}>
+                  <div className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5"
+                    style={{ background: a.correct ? '#1F8A5B22' : '#C53E3E22' }}>
+                    {a.correct
+                      ? <CheckCircle size={12} color="#1F8A5B" />
+                      : <XCircle size={12} color="#C53E3E" />}
+                  </div>
+                  <p className="flex-1 text-xs leading-relaxed" style={{ color: 'var(--text2)' }}>{a.question}</p>
+                  <span className="text-xs flex-shrink-0" style={{ color: 'var(--text3)' }}>{a.latency_sec}s</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
