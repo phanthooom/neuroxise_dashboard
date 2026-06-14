@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
 const nav = [
-  { href: '/', icon: Home, label: 'Overview', exact: true },
+  { href: '/overview', icon: Home, label: 'Overview', exact: true },
   { href: '/patients', icon: Users, label: 'Patients' },
   { href: '/analytics', icon: BarChart2, label: 'Analytics' },
   { href: '/settings', icon: Settings, label: 'Settings' },
