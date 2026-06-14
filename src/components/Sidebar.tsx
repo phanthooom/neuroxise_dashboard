@@ -1,12 +1,13 @@
 'use client'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Users, BarChart2, Settings, Brain, LogOut } from 'lucide-react'
+import { Home, Users, BarChart2, Settings, Brain, LogOut } from 'lucide-react'
 import clsx from 'clsx'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
 const nav = [
+  { href: '/', icon: Home, label: 'Overview', exact: true },
   { href: '/patients', icon: Users, label: 'Patients' },
   { href: '/analytics', icon: BarChart2, label: 'Analytics' },
   { href: '/settings', icon: Settings, label: 'Settings' },
@@ -54,8 +55,8 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 p-3 flex flex-col gap-1">
-        {nav.map(({ href, icon: Icon, label }) => {
-          const active = path.startsWith(href)
+        {nav.map(({ href, icon: Icon, label, exact }) => {
+          const active = exact ? path === href : path.startsWith(href)
           return (
             <Link key={href} href={href} className={clsx(
               'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',

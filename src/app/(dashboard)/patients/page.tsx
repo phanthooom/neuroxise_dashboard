@@ -44,6 +44,8 @@ export default function PatientsPage() {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [filterType, setFilterType] = useState<AphasiaType | 'all'>('all')
+  const [sortBy, setSortBy] = useState<'name' | 'accuracy' | 'lastSession'>('lastSession')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [showModal, setShowModal] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteName, setInviteName] = useState('')
@@ -114,11 +116,30 @@ export default function PatientsPage() {
     load()
   }, [])
 
-  const filtered = patients.filter(p => {
-    const matchesSearch = p.profile.name?.toLowerCase().includes(search.toLowerCase())
-    const matchesType = filterType === 'all' || p.dominantType === filterType
-    return matchesSearch && matchesType
-  })
+  function toggleSort(field: typeof sortBy) {
+    if (sortBy === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortBy(field); setSortDir('desc') }
+  }
+
+  const filtered = patients
+    .filter(p => {
+      const matchesSearch = p.profile.name?.toLowerCase().includes(search.toLowerCase())
+      const matchesType = filterType === 'all' || p.dominantType === filterType
+      return matchesSearch && matchesType
+    })
+    .sort((a, b) => {
+      let cmp = 0
+      if (sortBy === 'name') {
+        cmp = (a.profile.name ?? '').localeCompare(b.profile.name ?? '')
+      } else if (sortBy === 'accuracy') {
+        cmp = (a.accuracy30d ?? -1) - (b.accuracy30d ?? -1)
+      } else {
+        const da = a.lastSession ? new Date(a.lastSession.completed_at).getTime() : 0
+        const db = b.lastSession ? new Date(b.lastSession.completed_at).getTime() : 0
+        cmp = da - db
+      }
+      return sortDir === 'asc' ? cmp : -cmp
+    })
 
   const avgAccuracy = patients.filter(p => p.accuracy30d !== null)
   const avg = avgAccuracy.length > 0
@@ -135,7 +156,7 @@ export default function PatientsPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex-1 relative max-w-sm">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text3)' }} />
           <input
@@ -194,6 +215,26 @@ export default function PatientsPage() {
           </div>
         </div>
       )}
+
+      {/* Sort controls */}
+      <div className="flex gap-2 mb-4 items-center">
+        <span className="text-xs font-semibold" style={{ color: 'var(--text3)' }}>Sort:</span>
+        {([['lastSession', 'Last Session'], ['accuracy', 'Accuracy'], ['name', 'Name']] as const).map(([field, label]) => {
+          const active = sortBy === field
+          return (
+            <button key={field} onClick={() => toggleSort(field)}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+              style={{
+                background: active ? 'var(--surface)' : 'transparent',
+                color: active ? 'var(--text)' : 'var(--text3)',
+                border: `1px solid ${active ? 'var(--border)' : 'transparent'}`,
+              }}>
+              {label}
+              {active && <span style={{ color: 'var(--accent)' }}>{sortDir === 'asc' ? '↑' : '↓'}</span>}
+            </button>
+          )
+        })}
+      </div>
 
       {/* Aphasia type filter */}
       <div className="flex gap-2 mb-5 flex-wrap">
