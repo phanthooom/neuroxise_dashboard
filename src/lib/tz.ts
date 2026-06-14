@@ -12,8 +12,9 @@ export function formatRelative(isoStr: string | null | undefined): string {
     const d = parseAsUTC(isoStr)
     const now = new Date()
     const diff = Math.floor((now.getTime() - d.getTime()) / 86400000)
-    if (diff === 0) return 'Today'
-    if (diff === 1) return 'Yesterday'
+    const time = new Intl.DateTimeFormat('en', { hour: '2-digit', minute: '2-digit' }).format(d)
+    if (diff === 0) return `Today, ${time}`
+    if (diff === 1) return `Yesterday, ${time}`
     return `${diff}d ago`
   } catch {
     return '—'
