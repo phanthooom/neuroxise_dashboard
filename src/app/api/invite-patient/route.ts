@@ -2,14 +2,10 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 
-const adminSupabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { autoRefreshToken: false, persistSession: false } }
-)
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: Request) {
-  // Verify caller is authenticated doctor
+  // Verify caller is authenticated
   const supabase = await createSupabaseServerClient()
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) {
@@ -21,7 +17,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Email required' }, { status: 400 })
   }
 
-  // Invite user via Supabase admin
+  // Init admin client inside handler — env var available at runtime, not build time
+  const adminSupabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+
   const { data, error } = await adminSupabase.auth.admin.inviteUserByEmail(email, {
     data: { name: name ?? '' },
   })
@@ -30,7 +32,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 400 })
   }
 
-  // Pre-create profile as patient
   if (data.user) {
     await adminSupabase.from('profiles').upsert({
       id: data.user.id,
