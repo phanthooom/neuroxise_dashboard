@@ -21,17 +21,17 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
 
   const isLoginPage = request.nextUrl.pathname === '/login'
 
-  if (!user && !isLoginPage) {
+  if (!session && !isLoginPage) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  if (user && isLoginPage) {
+  if (session && isLoginPage) {
     const url = request.nextUrl.clone()
     url.pathname = '/patients'
     return NextResponse.redirect(url)
