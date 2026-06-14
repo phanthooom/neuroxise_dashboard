@@ -123,7 +123,7 @@ export default function PatientsPage() {
 
   const filtered = patients
     .filter(p => {
-      const matchesSearch = p.profile.name?.toLowerCase().includes(search.toLowerCase())
+      const matchesSearch = (p.profile.name ?? '').toLowerCase().includes(search.toLowerCase())
       const matchesType = filterType === 'all' || p.dominantType === filterType
       return matchesSearch && matchesType
     })
