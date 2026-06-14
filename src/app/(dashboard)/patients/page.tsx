@@ -71,19 +71,31 @@ export default function PatientsPage() {
 
   useEffect(() => {
     async function load() {
-      // Get all profiles that are patients
+      // Get current doctor's assigned patients only
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoading(false); return }
+
+      const { data: doctorPatients } = await supabase
+        .from('doctor_patients')
+        .select('patient_id')
+        .eq('doctor_id', user.id)
+
+      const patientIds = doctorPatients?.map(dp => dp.patient_id) ?? []
+
+      if (patientIds.length === 0) { setPatients([]); setLoading(false); return }
+
       const { data: profiles } = await supabase
         .from('profiles')
         .select('*')
-        .eq('role', 'patient')
+        .in('id', patientIds)
 
       if (!profiles) { setLoading(false); return }
 
-      // Single query for ALL patient sessions (fixes N+1)
+      // Single query for sessions of doctor's patients
       const { data: allSessions } = await supabase
         .from('therapy_sessions')
         .select('*')
-        .in('patient_id', profiles.map(p => p.id))
+        .in('patient_id', patientIds)
         .order('completed_at', { ascending: false })
 
       const sessionsByPatient: Record<string, TherapySession[]> = {}

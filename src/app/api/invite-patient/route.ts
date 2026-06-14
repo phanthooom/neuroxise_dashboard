@@ -38,6 +38,12 @@ export async function POST(request: Request) {
       name: name ?? email.split('@')[0],
       role: 'patient',
     })
+
+    // Link patient to the inviting doctor
+    await adminSupabase.from('doctor_patients').upsert({
+      doctor_id: session.user.id,
+      patient_id: data.user.id,
+    }, { onConflict: 'doctor_id,patient_id' })
   }
 
   return NextResponse.json({ success: true })

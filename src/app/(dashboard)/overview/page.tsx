@@ -37,14 +37,27 @@ export default function OverviewPage() {
       const thirtyAgo = new Date(); thirtyAgo.setDate(thirtyAgo.getDate() - 30)
       const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7)
 
-      const { data: sessions } = await supabase
-        .from('therapy_sessions')
-        .select('*')
-        .order('completed_at', { ascending: true })
+      // Scope to this doctor's assigned patients
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: doctorPatients } = await supabase
+        .from('doctor_patients')
+        .select('patient_id')
+        .eq('doctor_id', user.id)
+
+      const myPatientIds = doctorPatients?.map(dp => dp.patient_id) ?? []
+
+      const { data: sessions } = myPatientIds.length > 0
+        ? await supabase
+            .from('therapy_sessions')
+            .select('*')
+            .in('patient_id', myPatientIds)
+            .order('completed_at', { ascending: true })
+        : { data: [] }
 
       const allSessions: TherapySession[] = sessions ?? []
 
-      // Get profiles for all unique patient IDs (no role filter — catches users with null name too)
       const patientIds = [...new Set(allSessions.map(s => s.patient_id))]
       const { data: profiles } = patientIds.length > 0
         ? await supabase.from('profiles').select('id, name').in('id', patientIds)

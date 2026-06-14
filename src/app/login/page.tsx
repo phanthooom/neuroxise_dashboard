@@ -1,8 +1,8 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
-import { Brain } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -24,7 +24,7 @@ export default function LoginPage() {
       return
     }
 
-    router.replace('/patients')
+    router.replace('/overview')
   }
 
   return (
@@ -32,9 +32,8 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-            style={{ background: 'var(--accent)' }}>
-            <Brain size={28} color="white" />
+          <div className="w-16 h-16 rounded-2xl overflow-hidden mb-4" style={{ background: '#000' }}>
+            <Image src="/logo.jpg" alt="Neuroxise" width={64} height={64} className="w-full h-full object-cover" priority />
           </div>
           <h1 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>Neuroxise</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text3)' }}>Clinical Dashboard · Doctor Access</p>
