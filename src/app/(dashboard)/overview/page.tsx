@@ -93,7 +93,15 @@ export default function OverviewPage() {
       setRecentSessions(last10)
       setLoading(false)
     }
+
     load()
+
+    const channel = supabase
+      .channel('overview-realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'therapy_sessions' }, () => load())
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [])
 
   if (loading) {
@@ -115,7 +123,13 @@ export default function OverviewPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Overview</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Overview</h1>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#1F8A5B' }} />
+            <span className="text-xs font-semibold" style={{ color: '#1F8A5B' }}>Live</span>
+          </div>
+        </div>
         <p className="text-sm" style={{ color: 'var(--text3)' }}>
           {new Date().toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })}
         </p>

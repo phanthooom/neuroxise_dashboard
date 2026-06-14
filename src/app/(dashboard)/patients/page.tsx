@@ -113,7 +113,15 @@ export default function PatientsPage() {
       setPatients(results)
       setLoading(false)
     }
+
     load()
+
+    const channel = supabase
+      .channel('patients-realtime')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'therapy_sessions' }, () => load())
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [])
 
   function toggleSort(field: typeof sortBy) {

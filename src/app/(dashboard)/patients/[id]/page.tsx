@@ -136,6 +136,17 @@ export default function PatientDetailPage() {
       setLoading(false)
     }
     load()
+
+    const channel = supabase
+      .channel(`patient-${id}-realtime`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'therapy_sessions', filter: `patient_id=eq.${id}` },
+        (payload) => { setSessions(prev => [...prev, payload.new as TherapySession]) }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [id])
 
   if (loading) {
@@ -211,7 +222,13 @@ export default function PatientDetailPage() {
             {initials}
           </div>
           <div>
-            <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>{profile.name ?? 'Unknown'}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>{profile.name ?? 'Unknown'}</h1>
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#1F8A5B' }} />
+                <span className="text-xs font-semibold" style={{ color: '#1F8A5B' }}>Live</span>
+              </div>
+            </div>
             <p className="text-sm" style={{ color: 'var(--text3)' }}>
               Patient · ID {id.slice(0, 8).toUpperCase()}
               {dominantType && (
