@@ -1,7 +1,8 @@
 'use client'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, Users, BarChart2, Settings, Brain, LogOut } from 'lucide-react'
+import { Home, Users, BarChart2, Settings, LogOut } from 'lucide-react'
+import Image from 'next/image'
 import clsx from 'clsx'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
@@ -43,8 +44,8 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="p-5 border-b" style={{ borderColor: 'var(--border)' }}>
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'var(--accent)' }}>
-            <Brain size={16} color="white" />
+          <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0" style={{ background: '#000' }}>
+            <Image src="/logo.jpg" alt="Neuroxise" width={32} height={32} className="w-full h-full object-cover" />
           </div>
           <div>
             <p className="font-bold text-sm" style={{ color: 'var(--text)' }}>Neuroxise</p>
