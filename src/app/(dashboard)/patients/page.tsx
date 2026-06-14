@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Search, Plus, MoreVertical } from 'lucide-react'
+import { Search, Plus, MoreVertical, X } from 'lucide-react'
 import { supabase, type Profile, type TherapySession, type AphasiaType } from '@/lib/supabase'
 import Link from 'next/link'
 
@@ -42,6 +42,28 @@ export default function PatientsPage() {
   const [patients, setPatients] = useState<PatientWithStats[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const [showModal, setShowModal] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteName, setInviteName] = useState('')
+  const [inviteLoading, setInviteLoading] = useState(false)
+  const [inviteError, setInviteError] = useState<string | null>(null)
+  const [inviteSuccess, setInviteSuccess] = useState(false)
+
+  async function handleInvite(e: React.FormEvent) {
+    e.preventDefault()
+    setInviteLoading(true)
+    setInviteError(null)
+    const res = await fetch('/api/invite-patient', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: inviteEmail, name: inviteName }),
+    })
+    const data = await res.json()
+    setInviteLoading(false)
+    if (!res.ok) { setInviteError(data.error); return }
+    setInviteSuccess(true)
+    setTimeout(() => { setShowModal(false); setInviteSuccess(false); setInviteEmail(''); setInviteName('') }, 2000)
+  }
 
   useEffect(() => {
     async function load() {
@@ -125,11 +147,54 @@ export default function PatientsPage() {
             style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' }}
           />
         </div>
-        <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white ml-4" style={{ background: 'var(--accent)' }}>
+        <button onClick={() => setShowModal(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white ml-4"
+          style={{ background: 'var(--accent)' }}>
           <Plus size={16} />
           Add Patient
         </button>
       </div>
+
+      {/* Invite modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ background: 'rgba(0,0,0,0.6)' }}
+          onClick={e => { if (e.target === e.currentTarget) setShowModal(false) }}>
+          <div className="w-full max-w-sm rounded-2xl p-6" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+            <div className="flex items-center justify-between mb-5">
+              <p className="font-semibold" style={{ color: 'var(--text)' }}>Invite Patient</p>
+              <button onClick={() => setShowModal(false)} style={{ color: 'var(--text3)' }}><X size={18} /></button>
+            </div>
+            {inviteSuccess ? (
+              <div className="text-center py-6">
+                <p className="text-2xl mb-2">✓</p>
+                <p className="text-sm" style={{ color: '#1F8A5B' }}>Invite sent! Patient will receive an email.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleInvite} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text3)' }}>Patient Name</label>
+                  <input value={inviteName} onChange={e => setInviteName(e.target.value)}
+                    placeholder="Full name" className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text3)' }}>Email *</label>
+                  <input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
+                    placeholder="patient@email.com" required className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                    style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }} />
+                </div>
+                {inviteError && <p className="text-xs px-3 py-2 rounded-xl" style={{ background: '#C53E3E22', color: '#C53E3E' }}>{inviteError}</p>}
+                <button type="submit" disabled={inviteLoading}
+                  className="w-full py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-60"
+                  style={{ background: 'var(--accent)' }}>
+                  {inviteLoading ? 'Sending...' : 'Send Invite'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Patient grid */}
       {loading ? (
