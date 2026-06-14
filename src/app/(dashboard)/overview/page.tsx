@@ -37,14 +37,23 @@ export default function OverviewPage() {
       const thirtyAgo = new Date(); thirtyAgo.setDate(thirtyAgo.getDate() - 30)
       const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7)
 
-      const [{ data: profiles }, { data: sessions }] = await Promise.all([
-        supabase.from('profiles').select('id, name').eq('role', 'patient'),
-        supabase.from('therapy_sessions').select('*').order('completed_at', { ascending: true }),
-      ])
+      const { data: sessions } = await supabase
+        .from('therapy_sessions')
+        .select('*')
+        .order('completed_at', { ascending: true })
 
       const allSessions: TherapySession[] = sessions ?? []
+
+      // Get profiles for all unique patient IDs (no role filter — catches users with null name too)
+      const patientIds = [...new Set(allSessions.map(s => s.patient_id))]
+      const { data: profiles } = patientIds.length > 0
+        ? await supabase.from('profiles').select('id, name').in('id', patientIds)
+        : { data: [] }
+
       const allProfiles: Pick<Profile, 'id' | 'name'>[] = profiles ?? []
-      const profileMap = Object.fromEntries(allProfiles.map(p => [p.id, p.name]))
+      const profileMap = Object.fromEntries(
+        allProfiles.map(p => [p.id, p.name || `Patient ${p.id.slice(0, 6).toUpperCase()}`])
+      )
 
       const recent30 = allSessions.filter(s => new Date(s.completed_at) > thirtyAgo)
       const avgAcc30 = recent30.length > 0
@@ -71,7 +80,7 @@ export default function OverviewPage() {
       // Recent 10 sessions
       const last10 = [...allSessions].reverse().slice(0, 10).map(s => ({
         ...s,
-        patientName: profileMap[s.patient_id] ?? 'Unknown',
+        patientName: profileMap[s.patient_id] ?? `Patient ${s.patient_id.slice(0, 6).toUpperCase()}`,
       }))
 
       setStats({
