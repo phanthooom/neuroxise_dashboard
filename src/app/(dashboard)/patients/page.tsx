@@ -42,6 +42,7 @@ export default function PatientsPage() {
   const [patients, setPatients] = useState<PatientWithStats[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const [filterType, setFilterType] = useState<AphasiaType | 'all'>('all')
   const [showModal, setShowModal] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteName, setInviteName] = useState('')
@@ -108,9 +109,11 @@ export default function PatientsPage() {
     load()
   }, [])
 
-  const filtered = patients.filter(p =>
-    p.profile.name?.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = patients.filter(p => {
+    const matchesSearch = p.profile.name?.toLowerCase().includes(search.toLowerCase())
+    const matchesType = filterType === 'all' || p.dominantType === filterType
+    return matchesSearch && matchesType
+  })
 
   const avgAccuracy = patients.filter(p => p.accuracy30d !== null)
   const avg = avgAccuracy.length > 0
@@ -195,6 +198,28 @@ export default function PatientsPage() {
           </div>
         </div>
       )}
+
+      {/* Aphasia type filter */}
+      <div className="flex gap-2 mb-5 flex-wrap">
+        {(['all', 'semantic', 'sensory', 'opticMnestic', 'acousticMnestic'] as const).map(type => {
+          const active = filterType === type
+          const color = type === 'all' ? 'var(--accent)' : APHASIA_COLORS[type]
+          const count = type === 'all'
+            ? patients.length
+            : patients.filter(p => p.dominantType === type).length
+          return (
+            <button key={type} onClick={() => setFilterType(type)}
+              className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+              style={{
+                background: active ? color : `${color}18`,
+                color: active ? 'white' : color,
+                border: `1px solid ${active ? color : `${color}40`}`,
+              }}>
+              {type === 'all' ? 'All' : APHASIA_LABELS[type]} ({count})
+            </button>
+          )
+        })}
+      </div>
 
       {/* Patient grid */}
       {loading ? (
