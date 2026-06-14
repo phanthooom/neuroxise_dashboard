@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { Search, Plus, MoreVertical, X } from 'lucide-react'
 import { supabase, type Profile, type TherapySession, type AphasiaType } from '@/lib/supabase'
+import { formatRelative } from '@/lib/tz'
 import Link from 'next/link'
 
 const APHASIA_COLORS: Record<AphasiaType, string> = {
@@ -76,32 +77,36 @@ export default function PatientsPage() {
 
       if (!profiles) { setLoading(false); return }
 
-      // For each patient, get their sessions
-      const results: PatientWithStats[] = await Promise.all(
-        profiles.map(async (profile) => {
-          const thirtyDaysAgo = new Date()
-          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      // Single query for ALL patient sessions (fixes N+1)
+      const { data: allSessions } = await supabase
+        .from('therapy_sessions')
+        .select('*')
+        .in('patient_id', profiles.map(p => p.id))
+        .order('completed_at', { ascending: false })
 
-          const { data: sessions } = await supabase
-            .from('therapy_sessions')
-            .select('*')
-            .eq('patient_id', profile.id)
-            .order('completed_at', { ascending: false })
+      const sessionsByPatient: Record<string, TherapySession[]> = {}
+      allSessions?.forEach(s => {
+        if (!sessionsByPatient[s.patient_id]) sessionsByPatient[s.patient_id] = []
+        sessionsByPatient[s.patient_id].push(s)
+      })
 
-          const lastSession = sessions?.[0] ?? null
-          const recent = sessions?.filter(s => new Date(s.completed_at) > thirtyDaysAgo) ?? []
-          const accuracy30d = recent.length > 0
-            ? recent.reduce((sum, s) => sum + s.accuracy, 0) / recent.length * 100
-            : null
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-          // Most frequent aphasia type
-          const typeCounts: Record<string, number> = {}
-          sessions?.forEach(s => { typeCounts[s.aphasia_type] = (typeCounts[s.aphasia_type] ?? 0) + 1 })
-          const dominantType = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0]?.[0] as AphasiaType ?? null
+      const results: PatientWithStats[] = profiles.map((profile) => {
+        const sessions = sessionsByPatient[profile.id] ?? []
+        const lastSession = sessions[0] ?? null
+        const recent = sessions.filter(s => new Date(s.completed_at) > thirtyDaysAgo)
+        const accuracy30d = recent.length > 0
+          ? recent.reduce((sum, s) => sum + s.accuracy, 0) / recent.length * 100
+          : null
 
-          return { profile, lastSession, accuracy30d, dominantType }
-        })
-      )
+        const typeCounts: Record<string, number> = {}
+        sessions.forEach(s => { typeCounts[s.aphasia_type] = (typeCounts[s.aphasia_type] ?? 0) + 1 })
+        const dominantType = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0]?.[0] as AphasiaType ?? null
+
+        return { profile, lastSession, accuracy30d, dominantType }
+      })
 
       setPatients(results)
       setLoading(false)
@@ -126,15 +131,6 @@ export default function PatientsPage() {
     const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7)
     return d > weekAgo
   }).length
-
-  function formatDate(dateStr: string) {
-    const d = new Date(dateStr)
-    const now = new Date()
-    const diff = Math.floor((now.getTime() - d.getTime()) / 86400000)
-    if (diff === 0) return 'Today'
-    if (diff === 1) return 'Yesterday'
-    return `${diff} days ago`
-  }
 
   return (
     <div>
@@ -260,7 +256,7 @@ export default function PatientsPage() {
 
                   <div className="flex justify-between text-xs mb-1">
                     <span style={{ color: 'var(--text3)' }}>Last Session</span>
-                    <span style={{ color: 'var(--text2)' }}>{lastSession ? formatDate(lastSession.completed_at) : '—'}</span>
+                    <span style={{ color: 'var(--text2)' }}>{formatRelative(lastSession?.completed_at)}</span>
                   </div>
                   <div className="flex justify-between text-xs mb-2">
                     <span style={{ color: 'var(--text3)' }}>Aphasia Type</span>
