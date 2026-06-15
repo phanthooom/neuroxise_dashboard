@@ -33,7 +33,7 @@ export async function proxy(request: NextRequest) {
 
   if (session && isLoginPage) {
     const url = request.nextUrl.clone()
-    url.pathname = '/patients'
+    url.pathname = '/overview'
     return NextResponse.redirect(url)
   }
 
