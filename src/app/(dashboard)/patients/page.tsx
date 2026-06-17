@@ -52,6 +52,23 @@ export default function PatientsPage() {
   const [inviteLoading, setInviteLoading] = useState(false)
   const [inviteError, setInviteError] = useState<string | null>(null)
   const [inviteSuccess, setInviteSuccess] = useState(false)
+  const [nameLookupLoading, setNameLookupLoading] = useState(false)
+  const [nameAutoFilled, setNameAutoFilled] = useState(false)
+
+  async function handleEmailBlur() {
+    if (!inviteEmail || !inviteEmail.includes('@')) return
+    setNameLookupLoading(true)
+    try {
+      const res = await fetch(`/api/lookup-patient?email=${encodeURIComponent(inviteEmail)}`)
+      const data = await res.json()
+      if (data.name) {
+        setInviteName(data.name)
+        setNameAutoFilled(true)
+      }
+    } finally {
+      setNameLookupLoading(false)
+    }
+  }
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault()
@@ -66,7 +83,7 @@ export default function PatientsPage() {
     setInviteLoading(false)
     if (!res.ok) { setInviteError(data.error); return }
     setInviteSuccess(true)
-    setTimeout(() => { setShowModal(false); setInviteSuccess(false); setInviteEmail(''); setInviteName('') }, 2000)
+    setTimeout(() => { setShowModal(false); setInviteSuccess(false); setInviteEmail(''); setInviteName(''); setNameAutoFilled(false) }, 2000)
   }
 
   useEffect(() => {
@@ -213,15 +230,21 @@ export default function PatientsPage() {
             ) : (
               <form onSubmit={handleInvite} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text3)' }}>Patient Name</label>
-                  <input value={inviteName} onChange={e => setInviteName(e.target.value)}
-                    placeholder="Full name" className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                  <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text3)' }}>Email *</label>
+                  <input type="email" value={inviteEmail}
+                    onChange={e => { setInviteEmail(e.target.value); setNameAutoFilled(false) }}
+                    onBlur={handleEmailBlur}
+                    placeholder="patient@email.com" required className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
                     style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }} />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text3)' }}>Email *</label>
-                  <input type="email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
-                    placeholder="patient@email.com" required className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold" style={{ color: 'var(--text3)' }}>Patient Name</label>
+                    {nameLookupLoading && <span className="text-xs" style={{ color: 'var(--text3)' }}>Looking up...</span>}
+                    {nameAutoFilled && !nameLookupLoading && <span className="text-xs" style={{ color: '#1F8A5B' }}>✓ Auto-filled</span>}
+                  </div>
+                  <input value={inviteName} onChange={e => { setInviteName(e.target.value); setNameAutoFilled(false) }}
+                    placeholder="Full name" className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
                     style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }} />
                 </div>
                 {inviteError && <p className="text-xs px-3 py-2 rounded-xl" style={{ background: '#C53E3E22', color: '#C53E3E' }}>{inviteError}</p>}
