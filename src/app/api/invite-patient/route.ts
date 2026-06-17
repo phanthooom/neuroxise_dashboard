@@ -24,27 +24,39 @@ export async function POST(request: Request) {
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
 
-  const { data, error } = await adminSupabase.auth.admin.inviteUserByEmail(email, {
-    data: { name: name ?? '' },
-  })
+  // Check if user already exists
+  const { data: { users } } = await adminSupabase.auth.admin.listUsers({ perPage: 1000 })
+  const existingUser = users.find(u => u.email === email)
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 })
-  }
+  let userId: string
 
-  if (data.user) {
+  if (existingUser) {
+    // User exists — just link to doctor
+    userId = existingUser.id
+    if (name) {
+      await adminSupabase.from('profiles').update({ name }).eq('id', userId)
+    }
+  } else {
+    // New user — send invite
+    const { data, error } = await adminSupabase.auth.admin.inviteUserByEmail(email, {
+      data: { name: name ?? '' },
+    })
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+    userId = data.user.id
     await adminSupabase.from('profiles').upsert({
-      id: data.user.id,
+      id: userId,
       name: name ?? email.split('@')[0],
       role: 'patient',
     })
-
-    // Link patient to the inviting doctor
-    await adminSupabase.from('doctor_patients').upsert({
-      doctor_id: session.user.id,
-      patient_id: data.user.id,
-    }, { onConflict: 'doctor_id,patient_id' })
   }
+
+  // Link patient to the inviting doctor
+  await adminSupabase.from('doctor_patients').upsert({
+    doctor_id: session.user.id,
+    patient_id: userId,
+  }, { onConflict: 'doctor_id,patient_id' })
 
   return NextResponse.json({ success: true })
 }

@@ -232,7 +232,7 @@ export default function PatientsPage() {
                 <div>
                   <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text3)' }}>Email *</label>
                   <input type="email" value={inviteEmail}
-                    onChange={e => { setInviteEmail(e.target.value); setNameAutoFilled(false) }}
+                    onChange={e => { setInviteEmail(e.target.value); setNameAutoFilled(false); setInviteError(null) }}
                     onBlur={handleEmailBlur}
                     placeholder="patient@email.com" required className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
                     style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)' }} />
