@@ -46,7 +46,7 @@ export default function AnalyticsPage() {
   filtered.forEach(s => {
     const d = new Date(s.completed_at).toLocaleDateString('en', { month: 'short', day: 'numeric' })
     if (!dailyMap[d]) dailyMap[d] = { total: 0, count: 0 }
-    dailyMap[d].total += s.accuracy * 100
+    dailyMap[d].total += s.accuracy
     dailyMap[d].count++
   })
   const dailyData = Object.entries(dailyMap).map(([date, { total, count }]) => ({
@@ -67,7 +67,7 @@ export default function AnalyticsPage() {
   const levelMap: Record<string, { total: number; count: number }> = {}
   filtered.forEach(s => {
     if (!levelMap[s.level]) levelMap[s.level] = { total: 0, count: 0 }
-    levelMap[s.level].total += s.accuracy * 100
+    levelMap[s.level].total += s.accuracy
     levelMap[s.level].count++
   })
   const levelData = Object.entries(levelMap).map(([level, { total, count }]) => ({
@@ -77,7 +77,7 @@ export default function AnalyticsPage() {
 
   // Summary stats
   const totalSessions = filtered.length
-  const avgAcc = totalSessions > 0 ? filtered.reduce((s, sess) => s + sess.accuracy * 100, 0) / totalSessions : 0
+  const avgAcc = totalSessions > 0 ? filtered.reduce((s, sess) => s + sess.accuracy, 0) / totalSessions : 0
   const avgLatency = totalSessions > 0 ? filtered.reduce((s, sess) => s + sess.avg_latency_sec, 0) / totalSessions : 0
 
   if (loading) {

@@ -70,7 +70,7 @@ export default function OverviewPage() {
 
       const recent30 = allSessions.filter(s => new Date(s.completed_at) > thirtyAgo)
       const avgAcc30 = recent30.length > 0
-        ? recent30.reduce((s, x) => s + x.accuracy * 100, 0) / recent30.length
+        ? recent30.reduce((s, x) => s + x.accuracy, 0) / recent30.length
         : 0
 
       const activeIds = new Set(
@@ -82,7 +82,7 @@ export default function OverviewPage() {
       recent30.forEach(s => {
         const d = new Date(s.completed_at).toLocaleDateString('en', { month: 'short', day: 'numeric' })
         if (!dayMap[d]) dayMap[d] = { total: 0, count: 0 }
-        dayMap[d].total += s.accuracy * 100
+        dayMap[d].total += s.accuracy
         dayMap[d].count++
       })
       const trend = Object.entries(dayMap).map(([date, { total, count }]) => ({
@@ -209,7 +209,7 @@ export default function OverviewPage() {
             <tbody>
               {recentSessions.map(s => {
                 const color = APHASIA_COLORS[s.aphasia_type] ?? 'var(--accent)'
-                const acc = Math.round(s.accuracy * 100)
+                const acc = Math.round(s.accuracy)
                 const accColor = acc >= 80 ? '#1F8A5B' : acc >= 60 ? '#E5A84A' : '#C53E3E'
                 return (
                   <tr key={s.id} style={{ borderBottom: '1px solid var(--border)' }}>

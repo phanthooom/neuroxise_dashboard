@@ -47,7 +47,7 @@ function StatCard({ icon: Icon, label, value, sub, color }: {
 
 function SessionModal({ session, onClose }: { session: TherapySession; onClose: () => void }) {
   const typeColor = APHASIA_COLORS[session.aphasia_type] ?? 'var(--accent)'
-  const acc = Math.round(session.accuracy * 100)
+  const acc = Math.round(session.accuracy)
   const accColor = acc >= 80 ? '#1F8A5B' : acc >= 60 ? '#E5A84A' : '#C53E3E'
 
   return (
@@ -199,7 +199,7 @@ export default function PatientDetailPage() {
   // Chart data
   const accuracyChartData = filtered.map(s => ({
     date: formatDate(s.completed_at),
-    accuracy: Math.round(s.accuracy * 100),
+    accuracy: Math.round(s.accuracy),
     latency: +s.avg_latency_sec.toFixed(1),
   }))
 
@@ -212,7 +212,7 @@ export default function PatientDetailPage() {
 
   const totalSessions = filtered.length
   const avgAccuracy = totalSessions > 0
-    ? filtered.reduce((s, sess) => s + sess.accuracy, 0) / totalSessions * 100
+    ? filtered.reduce((s, sess) => s + sess.accuracy, 0) / totalSessions
     : 0
   const avgLatency = totalSessions > 0
     ? filtered.reduce((s, sess) => s + sess.avg_latency_sec, 0) / totalSessions
@@ -354,7 +354,7 @@ export default function PatientDetailPage() {
               <tbody>
                 {displayedSessions.map(s => {
                   const typeColor = APHASIA_COLORS[s.aphasia_type as AphasiaType] ?? 'var(--accent)'
-                  const acc = Math.round(s.accuracy * 100)
+                  const acc = Math.round(s.accuracy)
                   const accColor = acc >= 80 ? '#1F8A5B' : acc >= 60 ? '#E5A84A' : '#C53E3E'
                   return (
                     <tr key={s.id}

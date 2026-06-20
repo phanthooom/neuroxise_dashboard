@@ -129,7 +129,7 @@ export default function PatientsPage() {
         const lastSession = sessions[0] ?? null
         const recent = sessions.filter(s => new Date(s.completed_at) > thirtyDaysAgo)
         const accuracy30d = recent.length > 0
-          ? recent.reduce((sum, s) => sum + s.accuracy, 0) / recent.length * 100
+          ? recent.reduce((sum, s) => sum + s.accuracy, 0) / recent.length
           : null
 
         const typeCounts: Record<string, number> = {}
